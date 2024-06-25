@@ -11,12 +11,17 @@ const WeatherApp: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const handleAdd = () => {
+    if (searchQuery.trim() === "") {
+      return;
+    }
+
     const newWeatherItem: WeatherItem = {
       id: weatherItems.length + 1,
-      city: `City ${weatherItems.length + 1}`,
+      city: searchQuery.trim(),
       temperature: Math.floor(Math.random() * 40),
     };
     setWeatherItems([...weatherItems, newWeatherItem]);
+    setSearchQuery("");
   };
 
   const handleDelete = (id: number) => {
