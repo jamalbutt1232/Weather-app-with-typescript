@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface WeatherItem {
   id: number;
@@ -7,8 +7,15 @@ interface WeatherItem {
 }
 
 const WeatherApp: React.FC = () => {
-  const [weatherItems, setWeatherItems] = useState<WeatherItem[]>([]);
+  const [weatherItems, setWeatherItems] = useState<WeatherItem[]>(() => {
+    const savedItems = localStorage.getItem("weatherItems");
+    return savedItems ? JSON.parse(savedItems) : [];
+  });
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  useEffect(() => {
+    localStorage.setItem("weatherItems", JSON.stringify(weatherItems));
+  }, [weatherItems]);
 
   const handleAdd = () => {
     if (searchQuery.trim() === "") {
