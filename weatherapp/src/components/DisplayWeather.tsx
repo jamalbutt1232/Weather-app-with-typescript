@@ -30,7 +30,31 @@ const WeatherApp: React.FC = () => {
   };
 
   const handleSearch = () => {
-    console.log(`Searching for: ${searchQuery}`);
+    if (searchQuery.trim() === "") {
+      return;
+    }
+
+    fetch(
+      `https://api.openweathermap.org/data/2.5/weather?q=${searchQuery}&units=metric&appid=c8c75742fd6250ff469d3a84c8034b7c`
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to fetch weather data for ${searchQuery}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        const newWeatherItem: WeatherItem = {
+          id: Date.now(),
+          city: data.name,
+          temperature: data.main.temp,
+        };
+        setWeatherItems([...weatherItems, newWeatherItem]);
+        setSearchQuery("");
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+      });
   };
 
   return (
