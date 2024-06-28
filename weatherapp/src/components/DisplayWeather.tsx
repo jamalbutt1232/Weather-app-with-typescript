@@ -6,12 +6,18 @@ interface WeatherItem {
   id: number;
   city: string;
   temperature: number;
+  index: number; // New property to store index
 }
 
 const WeatherApp: React.FC = () => {
   const [weatherItems, setWeatherItems] = useState<WeatherItem[]>(() => {
     const savedItems = localStorage.getItem("weatherItems");
-    return savedItems ? JSON.parse(savedItems) : [];
+    if (savedItems) {
+      const parsedItems: WeatherItem[] = JSON.parse(savedItems);
+      // Add index to each item
+      return parsedItems.map((item, index) => ({ ...item, index }));
+    }
+    return [];
   });
   const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -21,28 +27,35 @@ const WeatherApp: React.FC = () => {
 
   const handleAdd = () => {
     if (searchQuery.trim() === "") {
+      toast.error("Please enter a city name");
       return;
     }
 
-    const newWeatherItem: WeatherItem = {
-      id:
-        weatherItems.length > 0
-          ? weatherItems[weatherItems.length - 1].id + 1
-          : 1,
-      city: searchQuery.trim(),
-      temperature: Math.floor(Math.random() * 40),
-    };
-    setWeatherItems([...weatherItems, newWeatherItem]);
-    setSearchQuery("");
+    const cityExists = weatherItems.some(
+      (item) => item.city.toLowerCase() === searchQuery.trim().toLowerCase()
+    );
+
+    if (cityExists) {
+      toast.error("City already exists");
+      return;
+    }
+
+    fetchWeatherData(searchQuery.trim());
   };
 
   const handleDelete = (id: number) => {
     const updatedWeatherItems = weatherItems.filter((item) => item.id !== id);
-    setWeatherItems(updatedWeatherItems);
+    // Update indexes for remaining items
+    const updatedItemsWithIndexes = updatedWeatherItems.map((item, index) => ({
+      ...item,
+      index,
+    }));
+    setWeatherItems(updatedItemsWithIndexes);
   };
 
   const handleSearch = () => {
     if (searchQuery.trim() === "") {
+      toast.error("Please enter a city name");
       return;
     }
 
@@ -50,6 +63,15 @@ const WeatherApp: React.FC = () => {
   };
 
   const fetchWeatherData = (city: string, itemIndex?: number) => {
+    const cityExists = weatherItems.some(
+      (item) => item.city.toLowerCase() === city.toLowerCase()
+    );
+
+    if (cityExists) {
+      toast.error("City already exists");
+      return;
+    }
+
     fetch(
       `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=c8c75742fd6250ff469d3a84c8034b7c`
     )
@@ -74,6 +96,7 @@ const WeatherApp: React.FC = () => {
             id: Date.now(),
             city: data.name,
             temperature: data.main.temp,
+            index: weatherItems.length, // Set index as current length of weatherItems
           };
           setWeatherItems([...weatherItems, newWeatherItem]);
         }
@@ -126,7 +149,7 @@ const WeatherApp: React.FC = () => {
             className="flex items-center justify-between border-b border-gray-200 py-2"
           >
             <span className="text-lg">
-              {item.city} {item.temperature}°C
+              {item.index + 1}. {item.city} {item.temperature}°C
             </span>
             <div>
               <button
